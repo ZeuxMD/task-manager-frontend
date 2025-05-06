@@ -1,10 +1,9 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
 interface User {
-  id: string
-  name: string
+  username: string
   email: string
-  linkedinUrl: string
+  linkedinUrl?: string
   profileImage?: string
 }
 
@@ -34,6 +33,9 @@ export const authSlice = createSlice({
     logout: (state) => {
       state.user = null
       state.isAuthenticated = false
+      if (typeof window !== "undefined") {
+        localStorage.removeItem('accessToken');
+      }
     },
     setAuthError: (state, action: PayloadAction<string>) => {
       state.error = action.payload

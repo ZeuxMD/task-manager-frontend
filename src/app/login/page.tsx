@@ -11,26 +11,64 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useDispatch } from "react-redux"
+import { login } from "@/lib/features/auth/authSlice"
 
 export default function LoginPage() {
   const router = useRouter()
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   })
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // In a real app, you would dispatch a login action here
-    console.log("Login attempt with:", formData)
-    router.push("/dashboard")
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Authentication failed, double check the email and password");
+      }
+
+      const { access_token, ...user } = await response.json();
+
+      if (access_token) {
+        localStorage.setItem('accessToken', access_token);
+        console.log("Login successful. Token stored.");
+        dispatch(login(user))
+        router.push("/dashboard"); // Redirect to dashboard
+      } else {
+        throw new Error('No token received from backend');
+      }
+
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || 'An unexpected error occurred during login.');
+    } finally {
+      setIsLoading(false); // Reset loading state
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -81,10 +119,11 @@ export default function LoginPage() {
                 </Button>
               </div>
             </div>
+            {error && <p className="text-sm text-red-500">{error}</p>} {/* Display error message */}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={isLoading}> {/* Disable button while loading */}
+              {isLoading ? 'Logging In...' : 'Login'}
             </Button>
             <div className="text-center text-sm">
               Don&apos;t have an account?{" "}

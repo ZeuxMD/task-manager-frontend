@@ -17,29 +17,65 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
-    name: "",
+    //name: "",
     email: "",
     password: "",
     confirmPassword: "",
     linkedinUrl: "",
   })
+  const [error, setError] = useState<string | null>(null); // State for error messages
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match")
-      return
-    }
-    // In a real app, you would dispatch a register action here
-    console.log("Register attempt with:", formData)
-    router.push("/dashboard")
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null); // Clear previous errors
+    setIsLoading(true); // Set loading state
 
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    const dataToSend = {
+      //username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      linkedinProfileUrl: formData.linkedinUrl || undefined,
+    };
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
+
+      // Assuming successful registration returns the created user object
+      const data = await response.json();
+      console.log("Registration successful:", data);
+
+      router.push("/dashboard");
+
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(err.message || 'An unexpected error occurred during registration.');
+    } finally {
+      setIsLoading(false); // Reset loading state
+    }
+  };
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -49,7 +85,7 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
+            {/*<div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
@@ -59,7 +95,7 @@ export default function RegisterPage() {
                 value={formData.name}
                 onChange={handleChange}
               />
-            </div>
+            </div>*/}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -125,15 +161,16 @@ export default function RegisterPage() {
                 name="linkedinUrl"
                 type="url"
                 placeholder="https://linkedin.com/in/username"
-                required
+                //required
                 value={formData.linkedinUrl}
                 onChange={handleChange}
               />
             </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full">
-              Register
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Registering...' : 'Register'}
             </Button>
             <div className="text-center text-sm">
               Already have an account?{" "}

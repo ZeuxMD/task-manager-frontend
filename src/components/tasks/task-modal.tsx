@@ -14,22 +14,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Task } from "./task"
 
 interface TaskModalProps {
   isOpen: boolean
-  onClose: () => void
-  onSave: (task: any) => void
-  task: any
+  onCloseAction: () => void
+  onSaveAction: (task: Task) => void
+  task: Task | null
 }
 
-export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalProps) {
+export default function TaskModal({ isOpen, onCloseAction: onClose, onSaveAction: onSave, task }: TaskModalProps) {
   const [formData, setFormData] = useState({
     id: "",
     title: "",
     description: "",
     dueDate: "",
-    category: "Work",
-    status: "Pending",
+    category: "All",
+    isCompleted: false,
   })
 
   useEffect(() => {
@@ -41,8 +42,8 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
         title: "",
         description: "",
         dueDate: new Date().toISOString().split("T")[0],
-        category: "Work",
-        status: "Pending",
+        category: "All",
+        isCompleted: false,
       })
     }
   }, [task])
@@ -115,7 +116,6 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
                       mode="single"
                       selected={formData.dueDate ? new Date(formData.dueDate) : undefined}
                       onSelect={handleDateChange}
-                      initialFocus
                     />
                   </PopoverContent>
                 </Popover>
@@ -127,6 +127,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }: TaskModalPr
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="All">General</SelectItem>
                     <SelectItem value="Work">Work</SelectItem>
                     <SelectItem value="Personal">Personal</SelectItem>
                     <SelectItem value="Shopping">Shopping</SelectItem>

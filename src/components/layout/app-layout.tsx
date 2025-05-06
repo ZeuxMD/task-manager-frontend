@@ -9,6 +9,9 @@ import { LayoutDashboard, User, LogOut, Menu, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useAppSelector } from "@/lib/hooks"
+import { logout } from "@/lib/features/auth/authSlice"
+import { useDispatch } from "react-redux"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -18,13 +21,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-
-  // In a real app, you would get this from Redux state
-  const user = {
-    name: "John Doe",
-    email: "john@example.com",
-    profileImage: "/placeholder.svg?height=40&width=40",
-  }
+  const dispatch = useDispatch();
+  const user = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -74,20 +72,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-card shadow-lg transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-card shadow-lg transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex h-full flex-col">
           {/* User profile section */}
           <div className="flex items-center gap-3 border-b p-4">
             <Avatar>
-              <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              {user?.profileImage && <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={user.username} />}
+              <AvatarFallback>{user?.username.charAt(0) || "U"}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="font-medium">{user.name}</span>
-              <span className="text-xs text-muted-foreground">{user.email}</span>
+              <span className="font-medium">{user?.username || "name"}</span>
+              <span className="text-xs text-muted-foreground">{user?.email}</span>
             </div>
           </div>
 
@@ -100,9 +97,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   key={item.name}
                   href={item.href}
                   onClick={closeSidebarOnMobile}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                  }`}
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                    }`}
                 >
                   <item.icon className="h-5 w-5" />
                   {item.name}
@@ -117,8 +113,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
               variant="outline"
               className="w-full justify-start gap-2"
               onClick={() => {
-                // In a real app, you would dispatch a logout action here
                 console.log("Logging out...")
+                dispatch(logout())
                 window.location.href = "/login"
               }}
             >
