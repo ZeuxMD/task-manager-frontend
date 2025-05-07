@@ -7,6 +7,22 @@ This is the frontend application for the Task Management project, built with Nex
 *   Node.js installed (version 18 or higher recommended)
 *   Access to the Task Management Backend (must be running)
 
+## Technologies Used
+
+This frontend application is built using the following core technologies:
+
+*   **Next.js**: v15.3.1
+*   **React**: v19.0.0
+*   **Redux Toolkit**: v2.7.0
+*   **React Redux**: v9.2.0
+*   **TypeScript**: v5
+*   **Tailwind CSS**: v4.1.4
+*   **Shadcn/ui**:
+*   **Lucide Icons**: v0.503.0
+*   **Date-fns**: v4.1.0
+
+*(Note: This list focuses on the main technologies. The `package.json` includes other dependencies for specific UI components, styling utilities, etc.)*
+
 ## Getting Started
 
 1.  **Clone the repository:**
