@@ -1,49 +1,56 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Eye, EyeOff } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/components/ui/use-toast";
+import { useDispatch } from "react-redux";
+import { login } from "@/lib/features/auth/authSlice";
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    //name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
     linkedinUrl: "",
-  })
-  const [error, setError] = useState<string | null>(null); // State for error messages
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
-    setIsLoading(true); // Set loading state
+    setIsLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      toast({ title: "Error", description: "Passwords do not match.", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
+    if (formData.password.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters long.", variant: "destructive" });
       setIsLoading(false);
       return;
     }
 
+
     const dataToSend = {
-      //username: formData.username,
+      username: formData.username,
       email: formData.email,
       password: formData.password,
       linkedinProfileUrl: formData.linkedinUrl || undefined,
@@ -58,22 +65,32 @@ export default function RegisterPage() {
         body: JSON.stringify(dataToSend),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+        throw new Error(responseData.message || 'Registration failed');
       }
 
-      // Assuming successful registration returns the created user object
-      const data = await response.json();
-      console.log("Registration successful:", data);
+      const { access_token, ...user } = responseData;
 
+      console.log("Registration successful:", responseData);
+      toast({
+        title: "Registration Successful",
+        description: "You can now log in.",
+      });
+      localStorage.setItem("accessToken", access_token);
+      dispatch(login(user))
       router.push("/dashboard");
 
     } catch (err: any) {
       console.error("Registration error:", err);
-      setError(err.message || 'An unexpected error occurred during registration.');
+      toast({
+        title: "Registration Failed",
+        description: err.message || 'An unexpected error occurred.',
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
     }
   };
   return (
@@ -85,17 +102,18 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {/*<div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="name"
-                name="name"
-                placeholder="John Doe"
+                id="username"
+                name="username"
+                placeholder="Choose a username"
                 required
-                value={formData.name}
+                value={formData.username}
                 onChange={handleChange}
+                autoComplete="username"
               />
-            </div>*/}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -106,6 +124,7 @@ export default function RegisterPage() {
                 required
                 value={formData.email}
                 onChange={handleChange}
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -116,18 +135,20 @@ export default function RegisterPage() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
+                  minLength={6}
                   value={formData.password}
                   onChange={handleChange}
+                  autoComplete="new-password"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
                 </Button>
               </div>
             </div>
@@ -141,40 +162,39 @@ export default function RegisterPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  autoComplete="new-password"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span className="sr-only">{showConfirmPassword ? "Hide password" : "Show password"}</span>
                 </Button>
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="linkedinUrl">LinkedIn Profile URL</Label>
+              <Label htmlFor="linkedinUrl">LinkedIn Profile URL <span className="text-muted-foreground">(Optional)</span></Label>
               <Input
                 id="linkedinUrl"
                 name="linkedinUrl"
                 type="url"
                 placeholder="https://linkedin.com/in/username"
-                //required
                 value={formData.linkedinUrl}
                 onChange={handleChange}
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Registering...' : 'Register'}
             </Button>
-            <div className="text-center text-sm">
+            <div className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="font-medium underline underline-offset-4">
+              <Link href="/login" className="font-medium text-primary underline underline-offset-4 hover:text-primary/90">
                 Login
               </Link>
             </div>
@@ -182,5 +202,5 @@ export default function RegisterPage() {
         </form>
       </Card>
     </div>
-  )
+  );
 }
