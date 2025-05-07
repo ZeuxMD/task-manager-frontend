@@ -1,7 +1,7 @@
 ## TODO
 - [ ] move jwt from localStorage to HTTP-only
 - [ ] create a route for managing task operations
-- [ ] separate client components from pages
+- [x] separate client components from pages
 
 
 
@@ -9,7 +9,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, set up the [backend](github.com/ZeuxMD/task-manger-backend), then run the development server:
 
 ```bash
 npm run dev
