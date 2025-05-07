@@ -29,7 +29,7 @@ This frontend application is built using the following core technologies:
 
     ```bash
     git clone https://github.com/ZeuxMD/task-manager-frontend.git
-    cd 
+    cd task-manager-frontend
     ```
 
 2.  **Install dependencies:**
